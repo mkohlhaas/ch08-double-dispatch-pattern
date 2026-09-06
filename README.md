@@ -10,6 +10,54 @@ languages like Java or C++ to handle complex interactions cleanly.
 * First dispatch: You call a method on the first object. The runtime uses its actual class type to pick the correct implementation.
 * Second dispatch: Inside that method, the first object calls a method on the second object (often passing itself this), which triggers dynamic binding a second time based on the second object's type.
 
+### UML Diagrams
+
+#### Class Diagram
+
+```
+┌────────────────────────────────┐
+│        «trait» Shape           │
+├────────────────────────────────┤
+│ + collide(&self,               │
+│     other: &dyn Shape)         │  ① first dispatch  (receiver-driven)
+│ + collide_with_asteroid(       │
+│     &self, &Asteroid)          │
+│ + collide_with_spaceship(      │
+│     &self, &Spaceship)         │  ② second dispatch (callback handoff)
+└────────────────────────────────┘
+        ▲                    ▲
+        │                    │
+  implements            implements
+        │                    │
+┌────────────────┐    ┌────────────────┐
+│   Asteroid     │    │   Spaceship    │
+├────────────────┤    ├────────────────┤
+│ collide(       │    │ collide(       │
+│   &dyn Shape)  │    │   &dyn Shape)  │
+│ collide_with_  │    │ collide_with_  │
+│   asteroid     │    │   asteroid     │
+│ collide_with_  │    │ collide_with_  │
+│   spaceship    │    │   spaceship    │
+└────────────────┘    └────────────────┘
+```
+
+#### Sequence Diagram — `shape1.collide(shape2)` (Asteroid × Spaceship)
+
+```
+ shape1:&dyn Shape         Asteroid self         Spaceship other
+        │                         │                       │
+        │      collide(other)     │                       │
+        │───────────────────────▶│  ① Dynamic dispatch   │
+        │                         │      on self          │
+        │  collision_with_space-  │                       │
+        │      ship(self)         │                       │
+        │                         │─────────────────────▶│  ② Dynamic dispatch
+        │                         │                       │      on other
+        │                         │  "Spaceship hit an    │
+        │                         │   Asteroid!" ◀───────│
+        │                         │                       │
+```
+
 ### Common Use Cases
 
 * Collisions in games: Deciding what happens when an object like an Asteroid hits a Spaceship depends on the specific subtype of both objects.
